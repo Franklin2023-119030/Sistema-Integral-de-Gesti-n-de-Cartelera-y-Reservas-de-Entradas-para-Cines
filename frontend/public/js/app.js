@@ -14,6 +14,14 @@ function renderizarVista(vista) {
     app.innerHTML = vista;
 }
 
+// Funciones para las secciones del navbar
+window.showProximos = function() {
+    app.innerHTML = '<h2>Próximos estrenos</h2><p>Próximamente...</p>';
+};
+
+window.showPromociones = function() {
+    app.innerHTML = '<h2>Promociones</h2><p>No hay promociones disponibles</p>';
+};
 // Actualizar la información del usuario en el header
 function actualizarUserInfo() {
     if (usuario) {

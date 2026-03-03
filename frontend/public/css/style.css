@@ -23,4 +23,28 @@ button {
     padding: 0.5rem 1rem;
     cursor: pointer;
     border-radius: 4px;
+    margin: 0.5rem;
+}
+input {
+    display: block;
+    margin: 0.5rem 0;
+    padding: 0.5rem;
+    width: 300px;
+}
+#auth {
+    max-width: 400px;
+    margin: auto;
+}
+.pelicula-card {
+    background: #222;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem;
+    display: inline-block;
+    width: 200px;
+    text-align: center;
+}
+.pelicula-card img {
+    width: 100%;
+    border-radius: 4px;
 }

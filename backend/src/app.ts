@@ -13,7 +13,6 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/peliculas', peliculaRoutes); // <-- Agregar
 app.use('/api/funciones', funcionRoutes); // <-- Agregar
-app.use('/api/compras', compraRoutes); // <-- Usar
 
 // Ruta de prueba
 app.get('/', (req, res) => {

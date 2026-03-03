@@ -1,4 +1,4 @@
-// app.js - Versión final con imágenes reales y cartelera directa
+// app.js - Versión final con navegación simplificada
 
 const API_URL = 'http://localhost:3000/api';
 let token = localStorage.getItem('token');
@@ -41,7 +41,7 @@ window.logout = function() {
     token = null;
     usuario = null;
     renderUserInfo();
-    loadPeliculas(); // Volver a la cartelera
+    loadPeliculas();
 };
 
 // Mostrar login
@@ -116,7 +116,7 @@ window.showRegister = function() {
     });
 };
 
-// Cargar películas (se llama al iniciar)
+// Cargar películas (cartelera)
 window.loadPeliculas = async function() {
     try {
         const res = await fetch(`${API_URL}/peliculas`);
@@ -279,6 +279,48 @@ function renderAsientos(asientos, funcionId) {
     });
 }
 
+// ==================== PRÓXIMOS ESTRENOS ====================
+window.showProximosEstrenos = function() {
+    // Datos de ejemplo de próximas películas
+    const proximos = [
+        {
+            titulo: 'Avatar 3',
+            fecha: '2026-12-18',
+            descripcion: 'La tercera entrega de la épica saga de Pandora.',
+            poster: 'https://picsum.photos/id/100/200/300'
+        },
+        {
+            titulo: 'Spider-Man: Beyond the Spider-Verse',
+            fecha: '2027-03-15',
+            descripcion: 'Miles Morales regresa en una nueva aventura multiversal.',
+            poster: 'https://picsum.photos/id/101/200/300'
+        },
+        {
+            titulo: 'El Señor de los Anillos: La cacería de Gollum',
+            fecha: '2026-09-10',
+            descripcion: 'Una nueva historia en la Tierra Media.',
+            poster: 'https://picsum.photos/id/102/200/300'
+        }
+    ];
+
+    let html = '<h2>Próximos estrenos</h2><div class="peliculas-grid">';
+    proximos.forEach(p => {
+        html += `
+            <div class="pelicula-card" style="cursor: default;">
+                <img src="${p.poster}" alt="${p.titulo}" 
+                     onerror="this.onerror=null; this.src='https://via.placeholder.com/200x300?text=No+Image';">
+                <div class="pelicula-info">
+                    <h3>${p.titulo}</h3>
+                    <p><strong>Estreno:</strong> ${new Date(p.fecha).toLocaleDateString('es-ES')}</p>
+                    <p>${p.descripcion}</p>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div><button class="btn btn-secondary" onclick="loadPeliculas()">Volver a cartelera</button>';
+    app.innerHTML = html;
+};
+
 // ==================== MODAL DE PAGO ====================
 function crearModal() {
     const modalHTML = `
@@ -399,22 +441,10 @@ window.mostrarFormulario = function(metodo) {
 
 function mostrarModalPago() {
     document.getElementById('modal-pago').style.display = 'flex';
-    mostrarFormulario('tarjeta'); // Por defecto
+    mostrarFormulario('tarjeta');
 }
 
-// ==================== FUNCIONES ADICIONALES ====================
-window.showProximos = function() {
-    app.innerHTML = '<h2>Próximos estrenos</h2><p>Próximamente...</p>';
-};
-
-window.showPromociones = function() {
-    app.innerHTML = '<h2>Promociones</h2><p>No hay promociones disponibles</p>';
-};
-
 // ==================== INICIALIZACIÓN ====================
-// Cambiar el nombre del cine en el navbar
-document.querySelector('.logo').textContent = 'CINEMA';
-
 // Crear modal al cargar la página
 crearModal();
 

@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cine - Compra de boletos</title>
+    <title>CINEMA - Compra de boletos</title>
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <!-- Opcional: FontAwesome para iconos (mejora visual) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <header>
         <nav class="navbar">
             <div class="nav-container">
-                <h1 class="logo">CINEMA</h1>
+                <h1 class="logo" onclick="loadPeliculas()" style="cursor: pointer;">CINEMA</h1>
                 <div class="nav-menu">
-                    <a href="#" onclick="showHome()">Inicio</a>
-                    <a href="#" onclick="loadPeliculas()">Cartelera</a>
-                    <a href="#" onclick="showProximos()">Próximos estrenos</a>
-                    <a href="#" onclick="showPromociones()">Promociones</a>
+                    <a href="#" onclick="loadPeliculas()">Inicio</a>
+                    <a href="#" onclick="showProximosEstrenos()">Próximos estrenos</a>
                 </div>
                 <div id="user-info" class="user-info"></div>
             </div>
@@ -26,7 +26,7 @@
         <!-- Contenido dinámico -->
     </main>
     <footer>
-        <p>&copy; 2026 Cine. Todos los derechos reservados.</p>
+        <p>&copy; 2026 CINEMA. Todos los derechos reservados.</p>
     </footer>
     <script src="js/app.js"></script>
 </body>

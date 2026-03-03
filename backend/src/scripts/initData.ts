@@ -48,10 +48,93 @@ async function init() {
   await writeData<Usuario>('usuarios', []);
 
   // Películas
-  await writeData<Pelicula>('peliculas', [
-    { id: 1, titulo: 'Scream', duracion: 120, directores: 'Wes Craven', actores: 'Neve Campbell, Courteney Cox', fechaLanzamiento: '2025-03-01', fechaFinCartelera: '2025-04-01', sinopsis: 'Un nuevo asesino acecha...', clasificacion: 'B', posterUrl: 'https://via.placeholder.com/200x300?text=Scream' },
-    { id: 2, titulo: 'Walk the Line', duracion: 135, directores: 'James Mangold', actores: 'Joaquin Phoenix, Reese Witherspoon', fechaLanzamiento: '2025-03-05', fechaFinCartelera: '2025-04-05', sinopsis: 'La vida de Johnny Cash', clasificacion: 'B', posterUrl: 'https://via.placeholder.com/200x300?text=Walk+the+Line' }
-  ]);
+  // Películas (7)
+await writeData<Pelicula>('peliculas', [
+  {
+    id: 1,
+    titulo: 'Dune: Parte 2',
+    duracion: 166,
+    directores: 'Denis Villeneuve',
+    actores: 'Timothée Chalamet, Zendaya, Austin Butler',
+    fechaLanzamiento: '2026-03-15',
+    fechaFinCartelera: '2026-05-15',
+    sinopsis: 'Paul Atreides se une a los Fremen para vengar a su familia y evitar que el Emperador pueda controlar la especia.',
+    clasificacion: 'B',
+    posterUrl: 'https://via.placeholder.com/200x300?text=Dune+2'
+  },
+  {
+    id: 2,
+    titulo: 'Intensamente 2',
+    duracion: 105,
+    directores: 'Kelsey Mann',
+    actores: 'Amy Poehler, Maya Hawke',
+    fechaLanzamiento: '2026-04-01',
+    fechaFinCartelera: '2026-06-01',
+    sinopsis: 'Nuevas emociones llegan a la mente de Riley, ahora adolescente.',
+    clasificacion: 'A',
+    posterUrl: 'https://via.placeholder.com/200x300?text=Inside+Out+2'
+  },
+  {
+    id: 3,
+    titulo: 'Oppenheimer',
+    duracion: 180,
+    directores: 'Christopher Nolan',
+    actores: 'Cillian Murphy, Emily Blunt, Robert Downey Jr.',
+    fechaLanzamiento: '2026-03-20',
+    fechaFinCartelera: '2026-05-20',
+    sinopsis: 'El físico J. Robert Oppenheimer trabaja en el proyecto de la bomba atómica.',
+    clasificacion: 'C',
+    posterUrl: 'https://via.placeholder.com/200x300?text=Oppenheimer'
+  },
+  {
+    id: 4,
+    titulo: 'Deadpool & Wolverine',
+    duracion: 128,
+    directores: 'Shawn Levy',
+    actores: 'Ryan Reynolds, Hugh Jackman',
+    fechaLanzamiento: '2026-05-01',
+    fechaFinCartelera: '2026-07-01',
+    sinopsis: 'Deadpool viaja por el multiverso para salvar su mundo con la ayuda de un renuente Wolverine.',
+    clasificacion: 'C',
+    posterUrl: 'https://via.placeholder.com/200x300?text=Deadpool+3'
+  },
+  {
+    id: 5,
+    titulo: 'Wonka',
+    duracion: 116,
+    directores: 'Paul King',
+    actores: 'Timothée Chalamet, Olivia Colman',
+    fechaLanzamiento: '2026-03-10',
+    fechaFinCartelera: '2026-05-10',
+    sinopsis: 'El joven Willy Wonka abre su primera chocolatería en la ciudad.',
+    clasificacion: 'A',
+    posterUrl: 'https://via.placeholder.com/200x300?text=Wonka'
+  },
+  {
+    id: 6,
+    titulo: 'Misión Imposible: Sentencia Mortal',
+    duracion: 163,
+    directores: 'Christopher McQuarrie',
+    actores: 'Tom Cruise, Hayley Atwell, Simon Pegg',
+    fechaLanzamiento: '2026-04-15',
+    fechaFinCartelera: '2026-06-15',
+    sinopsis: 'Ethan Hunt enfrenta a una nueva y poderosa inteligencia artificial.',
+    clasificacion: 'B',
+    posterUrl: 'https://via.placeholder.com/200x300?text=Mision+Imposible'
+  },
+  {
+    id: 7,
+    titulo: 'El Padrino 50 aniversario',
+    duracion: 175,
+    directores: 'Francis Ford Coppola',
+    actores: 'Marlon Brando, Al Pacino, James Caan',
+    fechaLanzamiento: '2026-05-05',
+    fechaFinCartelera: '2026-07-05',
+    sinopsis: 'Reestreno de la clásica historia de la familia Corleone.',
+    clasificacion: 'C',
+    posterUrl: 'https://via.placeholder.com/200x300?text=El+Padrino'
+  }
+]);
 
   // Salas
   await writeData<Sala>('salas', [

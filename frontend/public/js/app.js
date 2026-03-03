@@ -1,110 +1,71 @@
-// frontend/public/js/app.js
+// app.js - Versión final con modal de pagos
 
 const API_URL = 'http://localhost:3000/api';
 let token = localStorage.getItem('token');
 let usuario = JSON.parse(localStorage.getItem('usuario') || 'null');
+let compraData = null; // Almacena datos de la compra en curso
 
 // Elementos del DOM
 const app = document.getElementById('app');
 const userInfo = document.getElementById('user-info');
-const logoutBtn = document.getElementById('logout'); // Lo crearemos dinámicamente, pero lo manejamos después
 
-// Función para renderizar la vista actual
-function renderizarVista(vista) {
-    app.innerHTML = vista;
+// Función para hacer fetch con autenticación
+async function fetchWithAuth(url, options = {}) {
+    const headers = {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` })
+    };
+    const response = await fetch(url, { ...options, headers });
+    return response;
 }
 
-// Funciones para las secciones del navbar
-window.showProximos = function() {
-    app.innerHTML = '<h2>Próximos estrenos</h2><p>Próximamente...</p>';
-};
-
-window.showPromociones = function() {
-    app.innerHTML = '<h2>Promociones</h2><p>No hay promociones disponibles</p>';
-};
-// Actualizar la información del usuario en el header
-function actualizarUserInfo() {
+// Renderizar según estado de autenticación
+function renderUserInfo() {
     if (usuario) {
         userInfo.innerHTML = `
             <span>Bienvenido, ${usuario.nombre}</span>
-            <button id="logout">Cerrar sesión</button>
+            <button class="btn" onclick="logout()">Cerrar sesión</button>
         `;
-        document.getElementById('logout')?.addEventListener('click', cerrarSesion);
     } else {
         userInfo.innerHTML = `
-            <button id="btn-login">Iniciar sesión</button>
-            <button id="btn-register">Registrarse</button>
+            <button class="btn" onclick="showLogin()">Iniciar sesión</button>
+            <button class="btn" onclick="showRegister()">Registrarse</button>
         `;
-        document.getElementById('btn-login')?.addEventListener('click', mostrarLogin);
-        document.getElementById('btn-register')?.addEventListener('click', mostrarRegistro);
     }
 }
 
 // Cerrar sesión
-function cerrarSesion() {
+window.logout = function() {
     localStorage.removeItem('token');
     localStorage.removeItem('usuario');
     token = null;
     usuario = null;
-    actualizarUserInfo();
-    mostrarCartelera();
-}
+    renderUserInfo();
+    showHome();
+};
 
-// Mostrar formulario de registro
-function mostrarRegistro() {
-    renderizarVista(`
-        <h2>Registro</h2>
-        <form id="form-registro">
-            <input type="text" id="nombre" placeholder="Nombre" required>
-            <input type="email" id="email" placeholder="Email" required>
-            <input type="password" id="password" placeholder="Contraseña" required>
-            <button type="submit">Registrarse</button>
-        </form>
-        <p id="mensaje"></p>
-    `);
+// Mostrar inicio
+window.showHome = function() {
+    app.innerHTML = `
+        <h2>Bienvenido al cine</h2>
+        <button class="btn" onclick="loadPeliculas()">Ver cartelera</button>
+    `;
+};
 
-    document.getElementById('form-registro').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const nombre = document.getElementById('nombre').value;
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-
-        try {
-            const res = await fetch(`${API_URL}/auth/register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nombre, email, password })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                document.getElementById('mensaje').innerText = 'Registro exitoso. Ahora inicia sesión.';
-                setTimeout(mostrarLogin, 2000);
-            } else {
-                document.getElementById('mensaje').innerText = data.error || 'Error al registrar';
-            }
-        } catch (error) {
-            document.getElementById('mensaje').innerText = 'Error de conexión';
-        }
-    });
-}
-
-// Mostrar formulario de login
-function mostrarLogin() {
-    renderizarVista(`
+// Mostrar login
+window.showLogin = function() {
+    app.innerHTML = `
         <h2>Iniciar sesión</h2>
-        <form id="form-login">
+        <form id="login-form">
             <input type="email" id="email" placeholder="Email" required>
             <input type="password" id="password" placeholder="Contraseña" required>
-            <button type="submit">Ingresar</button>
+            <button type="submit" class="btn">Ingresar</button>
         </form>
-        <p id="mensaje"></p>
-    `);
-
-    document.getElementById('form-login').addEventListener('submit', async (e) => {
+    `;
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
-
         try {
             const res = await fetch(`${API_URL}/auth/login`, {
                 method: 'POST',
@@ -117,243 +78,331 @@ function mostrarLogin() {
                 usuario = data.usuario;
                 localStorage.setItem('token', token);
                 localStorage.setItem('usuario', JSON.stringify(usuario));
-                actualizarUserInfo();
-                mostrarCartelera();
+                renderUserInfo();
+                loadPeliculas();
             } else {
-                document.getElementById('mensaje').innerText = data.error || 'Credenciales inválidas';
+                alert('Error: ' + data.error);
             }
         } catch (error) {
-            document.getElementById('mensaje').innerText = 'Error de conexión';
+            alert('Error de conexión');
         }
     });
-}
+};
 
-// Mostrar cartelera de películas
-async function mostrarCartelera() {
+// Mostrar registro
+window.showRegister = function() {
+    app.innerHTML = `
+        <h2>Registro</h2>
+        <form id="register-form">
+            <input type="text" id="nombre" placeholder="Nombre" required>
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="password" id="password" placeholder="Contraseña" required>
+            <button type="submit" class="btn">Registrarse</button>
+        </form>
+    `;
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const nombre = document.getElementById('nombre').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        try {
+            const res = await fetch(`${API_URL}/auth/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre, email, password })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert('Registro exitoso. Ahora inicia sesión.');
+                showLogin();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        } catch (error) {
+            alert('Error de conexión');
+        }
+    });
+};
+
+// Cargar películas
+window.loadPeliculas = async function() {
     try {
         const res = await fetch(`${API_URL}/peliculas`);
         const peliculas = await res.json();
+        renderPeliculas(peliculas);
+    } catch (error) {
+        app.innerHTML = '<p>Error al cargar películas</p>';
+    }
+};
 
-        let html = '<h2>Cartelera</h2><div class="grid-peliculas">';
-        peliculas.forEach(p => {
-            html += `
-                <div class="pelicula-card" data-id="${p.id}">
-                    <img src="${p.posterUrl}" alt="${p.titulo}">
+function renderPeliculas(peliculas) {
+    if (peliculas.length === 0) {
+        app.innerHTML = '<p>No hay películas en cartelera</p>';
+        return;
+    }
+
+    let html = '<h2>Cartelera</h2><div class="peliculas-grid">';
+    peliculas.forEach(p => {
+        html += `
+            <div class="pelicula-card" onclick="verFunciones(${p.id})">
+                <img src="${p.posterUrl}" alt="${p.titulo}" onerror="this.src='https://via.placeholder.com/200x300?text=No+Image'">
+                <div class="pelicula-info">
                     <h3>${p.titulo}</h3>
                     <p>Duración: ${p.duracion} min</p>
                     <p>Clasificación: ${p.clasificacion}</p>
-                    <button class="btn-ver-funciones">Ver horarios</button>
+                    <button class="btn">Ver horarios</button>
                 </div>
-            `;
-        });
-        html += '</div>';
-        renderizarVista(html);
-
-        // Agregar eventos a los botones de ver horarios
-        document.querySelectorAll('.btn-ver-funciones').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const card = e.target.closest('.pelicula-card');
-                const peliculaId = card.dataset.id;
-                mostrarFunciones(peliculaId);
-            });
-        });
-    } catch (error) {
-        renderizarVista('<p>Error al cargar películas</p>');
-    }
+            </div>
+        `;
+    });
+    html += '</div>';
+    app.innerHTML = html;
 }
 
-// Mostrar funciones de una película
-async function mostrarFunciones(peliculaId) {
+// Ver funciones de una película
+window.verFunciones = async function(peliculaId) {
     try {
         const res = await fetch(`${API_URL}/funciones/pelicula/${peliculaId}`);
         const funciones = await res.json();
-
-        if (funciones.length === 0) {
-            renderizarVista('<p>No hay funciones disponibles para esta película.</p><button id="volver">Volver</button>');
-            document.getElementById('volver')?.addEventListener('click', mostrarCartelera);
-            return;
-        }
-
-        let html = '<h2>Horarios disponibles</h2><div class="lista-funciones">';
-        funciones.forEach(f => {
-            const fecha = new Date(f.fechaHora).toLocaleString();
-            html += `
-                <div class="funcion-card" data-id="${f.id}" data-sala="${f.sala.nombre}">
-                    <p><strong>Sala:</strong> ${f.sala.nombre}</p>
-                    <p><strong>Fecha y hora:</strong> ${fecha}</p>
-                    <p><strong>Precio:</strong> S/ ${f.precioBase}</p>
-                    <button class="btn-seleccionar-asientos">Seleccionar asientos</button>
-                </div>
-            `;
-        });
-        html += '</div><button id="volver">Volver a cartelera</button>';
-        renderizarVista(html);
-
-        document.querySelectorAll('.btn-seleccionar-asientos').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const card = e.target.closest('.funcion-card');
-                const funcionId = card.dataset.id;
-                const salaNombre = card.dataset.sala;
-                mostrarAsientos(funcionId, salaNombre);
-            });
-        });
-
-        document.getElementById('volver')?.addEventListener('click', mostrarCartelera);
+        renderFunciones(funciones, peliculaId);
     } catch (error) {
-        renderizarVista('<p>Error al cargar funciones</p><button id="volver">Volver</button>');
-        document.getElementById('volver')?.addEventListener('click', mostrarCartelera);
+        alert('Error al cargar funciones');
     }
+};
+
+function renderFunciones(funciones, peliculaId) {
+    if (funciones.length === 0) {
+        app.innerHTML = '<p>No hay funciones disponibles</p><button class="btn" onclick="loadPeliculas()">Volver</button>';
+        return;
+    }
+
+    let html = '<h2>Selecciona un horario</h2><div class="funciones-lista">';
+    funciones.forEach(f => {
+        const fecha = new Date(f.fechaHora).toLocaleString();
+        html += `
+            <div class="funcion-card">
+                <p><strong>${fecha}</strong></p>
+                <p>Sala: ${f.sala.nombre} (Cap. ${f.sala.capacidad})</p>
+                <p>Precio: S/ ${f.precioBase}</p>
+                <button class="btn" onclick="verAsientos(${f.id})">Seleccionar asientos</button>
+            </div>
+        `;
+    });
+    html += '</div><button class="btn" onclick="loadPeliculas()">Volver</button>';
+    app.innerHTML = html;
 }
 
-// Mostrar asientos de una función
-async function mostrarAsientos(funcionId, salaNombre) {
+// Ver asientos de una función
+window.verAsientos = async function(funcionId) {
     if (!token) {
-        alert('Debes iniciar sesión para comprar asientos');
-        mostrarLogin();
+        alert('Debes iniciar sesión para comprar');
+        showLogin();
         return;
     }
 
     try {
         const res = await fetch(`${API_URL}/funciones/${funcionId}/asientos`);
         const asientos = await res.json();
-
-        let html = `<h2>Sala: ${salaNombre}</h2>`;
-        html += '<div class="mapa-butacas" id="mapa">';
-
-        // Agrupar por fila para mostrarlos ordenados
-        const filas = {};
-        asientos.forEach(a => {
-            if (!filas[a.fila]) filas[a.fila] = [];
-            filas[a.fila].push(a);
-        });
-
-        // Ordenar filas alfabéticamente
-        const filasOrdenadas = Object.keys(filas).sort();
-
-        filasOrdenadas.forEach(fila => {
-            html += `<div class="fila">`;
-            filas[fila].forEach(asiento => {
-                const clase = asiento.ocupado ? 'ocupado' : 'libre';
-                html += `<div class="asiento ${clase}" data-id="${asiento.id}" data-coordenadas="${asiento.coordenadas}">${asiento.coordenadas}</div>`;
-            });
-            html += `</div>`;
-        });
-        html += '</div>';
-
-        html += `
-            <div id="seleccionados">Asientos seleccionados: </div>
-            <button id="comprar" disabled>Comprar</button>
-            <button id="volver">Volver a horarios</button>
-        `;
-
-        renderizarVista(html);
-
-        const seleccionados = new Set(); // guardar ids de asientos seleccionados
-        const asientosMap = new Map(); // para obtener datos fácilmente
-
-        document.querySelectorAll('.asiento.libre').forEach(el => {
-            asientosMap.set(el.dataset.id, el);
-            el.addEventListener('click', () => {
-                const id = parseInt(el.dataset.id);
-                if (seleccionados.has(id)) {
-                    seleccionados.delete(id);
-                    el.classList.remove('seleccionado');
-                } else {
-                    seleccionados.add(id);
-                    el.classList.add('seleccionado');
-                }
-                actualizarBotonCompra(seleccionados);
-            });
-        });
-
-        function actualizarBotonCompra(seleccionados) {
-            const btn = document.getElementById('comprar');
-            const divSeleccionados = document.getElementById('seleccionados');
-            if (seleccionados.size > 0) {
-                btn.disabled = false;
-                const coordenadas = Array.from(seleccionados).map(id => {
-                    return asientosMap.get(id.toString())?.dataset.coordenadas;
-                }).join(', ');
-                divSeleccionados.innerText = `Asientos seleccionados: ${coordenadas}`;
-            } else {
-                btn.disabled = true;
-                divSeleccionados.innerText = 'Asientos seleccionados: ';
-            }
-        }
-
-        document.getElementById('comprar').addEventListener('click', () => {
-            if (seleccionados.size === 0) return;
-            mostrarPago(funcionId, Array.from(seleccionados));
-        });
-
-        document.getElementById('volver').addEventListener('click', () => {
-            mostrarFunciones(new URLSearchParams(window.location.search).get('peliculaId') || 1); // Mejor pasar el id
-        });
-
+        renderAsientos(asientos, funcionId);
     } catch (error) {
-        console.error(error);
-        renderizarVista('<p>Error al cargar asientos</p><button id="volver">Volver</button>');
-        document.getElementById('volver')?.addEventListener('click', mostrarCartelera);
+        alert('Error al cargar asientos');
     }
-}
+};
 
-// Mostrar opciones de pago
-function mostrarPago(funcionId, asientosIds) {
-    renderizarVista(`
-        <h2>Selecciona método de pago</h2>
-        <form id="form-pago">
-            <label>
-                <input type="radio" name="metodo" value="tarjeta" checked> Tarjeta de crédito/débito
-            </label><br>
-            <label>
-                <input type="radio" name="metodo" value="transferencia"> Transferencia bancaria
-            </label><br>
-            <label>
-                <input type="radio" name="metodo" value="billetera"> Billetera digital
-            </label><br><br>
-            <button type="submit">Confirmar compra</button>
-        </form>
-        <p id="mensaje-pago"></p>
-        <button id="volver">Volver a asientos</button>
-    `);
+function renderAsientos(asientos, funcionId) {
+    const seleccionados = [];
 
-    document.getElementById('form-pago').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const metodo = document.querySelector('input[name="metodo"]:checked').value;
-        const mensaje = document.getElementById('mensaje-pago');
-        mensaje.innerText = 'Procesando...';
+    let html = `
+        <h2>Selecciona tus asientos</h2>
+        <div class="mapa-butacas" id="mapa-butacas">
+            <div class="pantalla">PANTALLA</div>
+    `;
 
-        try {
-            const res = await fetch(`${API_URL}/compras`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    usuarioId: usuario.id,
-                    funcionId,
-                    asientosIds,
-                    metodoPago: metodo
-                })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                mensaje.innerText = '¡Compra exitosa!';
-                setTimeout(() => mostrarCartelera(), 2000);
+    asientos.forEach(a => {
+        const clase = a.ocupado ? 'ocupado' : '';
+        html += `<div class="asiento ${clase}" data-id="${a.id}" data-coordenadas="${a.coordenadas}">${a.coordenadas}</div>`;
+    });
+
+    html += '</div>';
+
+    // Leyenda
+    html += `
+        <div class="leyenda">
+            <div class="leyenda-item">
+                <div class="leyenda-color disponible"></div>
+                <span>Disponible</span>
+            </div>
+            <div class="leyenda-item">
+                <div class="leyenda-color seleccionado"></div>
+                <span>Seleccionado</span>
+            </div>
+            <div class="leyenda-item">
+                <div class="leyenda-color ocupado"></div>
+                <span>Ocupado</span>
+            </div>
+        </div>
+    `;
+
+    html += '<p>Asientos seleccionados: <span id="seleccionados">0</span></p>';
+    html += '<button class="btn" id="btn-comprar">Comprar</button>';
+    html += '<button class="btn btn-secondary" onclick="loadPeliculas()">Cancelar</button>';
+
+    app.innerHTML = html;
+
+    // Agregar eventos a los asientos
+    document.querySelectorAll('.asiento:not(.ocupado)').forEach(asiento => {
+        asiento.addEventListener('click', () => {
+            const id = asiento.dataset.id;
+            const index = seleccionados.indexOf(id);
+            if (index === -1) {
+                seleccionados.push(id);
+                asiento.classList.add('seleccionado');
             } else {
-                mensaje.innerText = data.error || 'Error en la compra';
+                seleccionados.splice(index, 1);
+                asiento.classList.remove('seleccionado');
             }
-        } catch (error) {
-            mensaje.innerText = 'Error de conexión';
-        }
+            document.getElementById('seleccionados').textContent = seleccionados.length;
+        });
     });
 
-    document.getElementById('volver').addEventListener('click', () => {
-        mostrarAsientos(funcionId, 'Sala'); // Necesitamos el nombre de sala, lo podemos pasar como parámetro
+    // Evento comprar
+    document.getElementById('btn-comprar').addEventListener('click', () => {
+        if (seleccionados.length === 0) {
+            alert('Selecciona al menos un asiento');
+            return;
+        }
+        // Guardar datos de compra
+        compraData = {
+            funcionId: funcionId,
+            asientosIds: seleccionados.map(Number)
+        };
+        mostrarModalPago();
     });
 }
 
-// Inicialización
-actualizarUserInfo();
-mostrarCartelera();
+// Funciones para el modal de pago
+function mostrarModalPago() {
+    const modal = document.getElementById('modal-pago');
+    if (!modal) {
+        crearModal();
+    }
+    document.getElementById('modal-pago').style.display = 'flex';
+    mostrarFormulario('tarjeta'); // Por defecto
+}
+
+function crearModal() {
+    const modalHTML = `
+        <div id="modal-pago" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="close" onclick="cerrarModal()">&times;</span>
+                <h2>Selecciona método de pago</h2>
+                <div class="metodos-pago">
+                    <button class="btn-metodo" onclick="mostrarFormulario('tarjeta')">Tarjeta</button>
+                    <button class="btn-metodo" onclick="mostrarFormulario('transferencia')">Transferencia</button>
+                    <button class="btn-metodo" onclick="mostrarFormulario('billetera')">Billetera digital</button>
+                </div>
+                <div id="form-pago-container"></div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+window.cerrarModal = function() {
+    document.getElementById('modal-pago').style.display = 'none';
+};
+
+window.mostrarFormulario = function(metodo) {
+    const container = document.getElementById('form-pago-container');
+    let html = '';
+
+    if (metodo === 'tarjeta') {
+        html = `
+            <form id="form-tarjeta">
+                <h3>Pago con tarjeta</h3>
+                <input type="text" placeholder="Número de tarjeta" required>
+                <input type="text" placeholder="Nombre del titular" required>
+                <div style="display: flex; gap: 1rem;">
+                    <input type="text" placeholder="MM/AA" required>
+                    <input type="text" placeholder="CVV" required>
+                </div>
+                <button type="submit" class="btn">Pagar</button>
+            </form>
+        `;
+    } else if (metodo === 'transferencia') {
+        html = `
+            <form id="form-transferencia">
+                <h3>Transferencia bancaria</h3>
+                <p>Banco: Banco de Crédito</p>
+                <p>Cuenta: 123-4567890-123</p>
+                <p>CCI: 12345678901234567890</p>
+                <label>Número de operación:</label>
+                <input type="text" placeholder="Ingrese el número de operación" required>
+                <button type="submit" class="btn">Confirmar pago</button>
+            </form>
+        `;
+    } else if (metodo === 'billetera') {
+        html = `
+            <form id="form-billetera">
+                <h3>Billetera digital</h3>
+                <select required>
+                    <option value="">Seleccione</option>
+                    <option value="yape">Yape</option>
+                    <option value="plin">Plin</option>
+                    <option value="tunki">Tunki</option>
+                </select>
+                <input type="text" placeholder="Número de celular" required>
+                <button type="submit" class="btn">Pagar</button>
+            </form>
+        `;
+    }
+
+    container.innerHTML = html;
+
+    // Agregar evento submit al formulario
+    const form = container.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!compraData) return;
+
+            try {
+                const res = await fetchWithAuth(`${API_URL}/compras`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        usuarioId: usuario.id,
+                        funcionId: compraData.funcionId,
+                        asientosIds: compraData.asientosIds,
+                        metodoPago: metodo
+                    })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert(`¡Compra exitosa! ID: ${data.compraId}`);
+                    cerrarModal();
+                    loadPeliculas();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error al procesar la compra');
+            }
+        });
+    }
+};
+
+// Funciones adicionales para el navbar
+window.showProximos = function() {
+    app.innerHTML = '<h2>Próximos estrenos</h2><p>Próximamente...</p>';
+};
+
+window.showPromociones = function() {
+    app.innerHTML = '<h2>Promociones</h2><p>No hay promociones disponibles</p>';
+};
+
+// Inicializar
+renderUserInfo();
+showHome();
+
+// Crear el modal al cargar la página
+crearModal();

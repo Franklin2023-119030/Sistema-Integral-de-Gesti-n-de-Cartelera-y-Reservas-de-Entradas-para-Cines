@@ -1,4 +1,4 @@
-// app.js - Versión final con navegación simplificada
+// app.js - Versión final con notificaciones centrales
 
 const API_URL = 'http://localhost:3000/api';
 let token = localStorage.getItem('token');
@@ -8,6 +8,17 @@ let compraData = null;
 // Elementos del DOM
 const app = document.getElementById('app');
 const userInfo = document.getElementById('user-info');
+
+// Función para mostrar notificaciones flotantes
+function mostrarNotificacion(mensaje, tipo = 'error') {
+    const notif = document.createElement('div');
+    notif.className = `notificacion ${tipo === 'exito' ? 'exito' : ''}`;
+    notif.textContent = mensaje;
+    document.body.appendChild(notif);
+    setTimeout(() => {
+        notif.remove();
+    }, 3000);
+}
 
 // Función para hacer fetch con autenticación
 async function fetchWithAuth(url, options = {}) {
@@ -73,10 +84,10 @@ window.showLogin = function() {
                 renderUserInfo();
                 loadPeliculas();
             } else {
-                alert('Error: ' + data.error);
+                mostrarNotificacion('Datos incorrectos');
             }
         } catch (error) {
-            alert('Error de conexión');
+            mostrarNotificacion('Error de conexión');
         }
     });
 };
@@ -105,13 +116,13 @@ window.showRegister = function() {
             });
             const data = await res.json();
             if (res.ok) {
-                alert('Registro exitoso. Ahora inicia sesión.');
+                mostrarNotificacion('Registro exitoso. Ahora inicia sesión.', 'exito');
                 showLogin();
             } else {
-                alert('Error: ' + data.error);
+                mostrarNotificacion('Error: ' + data.error);
             }
         } catch (error) {
-            alert('Error de conexión');
+            mostrarNotificacion('Error de conexión');
         }
     });
 };
@@ -123,6 +134,7 @@ window.loadPeliculas = async function() {
         const peliculas = await res.json();
         renderPeliculas(peliculas);
     } catch (error) {
+        mostrarNotificacion('Error al cargar películas');
         app.innerHTML = '<p>Error al cargar películas</p>';
     }
 };
@@ -159,7 +171,7 @@ window.verFunciones = async function(peliculaId) {
         const funciones = await res.json();
         renderFunciones(funciones, peliculaId);
     } catch (error) {
-        alert('Error al cargar funciones');
+        mostrarNotificacion('Error al cargar funciones');
     }
 };
 
@@ -195,7 +207,7 @@ function renderFunciones(funciones, peliculaId) {
 // Ver asientos de una función
 window.verAsientos = async function(funcionId) {
     if (!token) {
-        alert('Debes iniciar sesión para comprar');
+        mostrarNotificacion('Debes iniciar sesión para comprar');
         showLogin();
         return;
     }
@@ -205,7 +217,7 @@ window.verAsientos = async function(funcionId) {
         const asientos = await res.json();
         renderAsientos(asientos, funcionId);
     } catch (error) {
-        alert('Error al cargar asientos');
+        mostrarNotificacion('Error al cargar asientos');
     }
 };
 
@@ -268,7 +280,7 @@ function renderAsientos(asientos, funcionId) {
     // Evento comprar
     document.getElementById('btn-comprar').addEventListener('click', () => {
         if (seleccionados.length === 0) {
-            alert('Selecciona al menos un asiento');
+            mostrarNotificacion('Selecciona al menos un asiento');
             return;
         }
         compraData = {
@@ -281,7 +293,6 @@ function renderAsientos(asientos, funcionId) {
 
 // ==================== PRÓXIMOS ESTRENOS ====================
 window.showProximosEstrenos = function() {
-    // Datos de ejemplo de próximas películas
     const proximos = [
         {
             titulo: 'Avatar 3',
@@ -426,14 +437,14 @@ window.mostrarFormulario = function(metodo) {
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    alert(`¡Compra exitosa! ID: ${data.compraId}`);
+                    mostrarNotificacion(`¡Compra exitosa! ID: ${data.compraId}`, 'exito');
                     cerrarModal();
                     loadPeliculas();
                 } else {
-                    alert('Error: ' + data.error);
+                    mostrarNotificacion('Error: ' + data.error);
                 }
             } catch (error) {
-                alert('Error al procesar la compra');
+                mostrarNotificacion('Error al procesar la compra');
             }
         });
     }
@@ -445,11 +456,6 @@ function mostrarModalPago() {
 }
 
 // ==================== INICIALIZACIÓN ====================
-// Crear modal al cargar la página
 crearModal();
-
-// Renderizar info de usuario
 renderUserInfo();
-
-// Mostrar la cartelera directamente
 loadPeliculas();

@@ -1,4 +1,4 @@
-// app.js - Versión final con modal de pagos
+// app.js - Versión final con funciones agrupadas por día y modal de pago mejorado
 
 const API_URL = 'http://localhost:3000/api';
 let token = localStorage.getItem('token');
@@ -176,19 +176,36 @@ function renderFunciones(funciones, peliculaId) {
         return;
     }
 
-    let html = '<h2>Selecciona un horario</h2><div class="funciones-lista">';
-    funciones.forEach(f => {
-        const fecha = new Date(f.fechaHora).toLocaleString();
-        html += `
-            <div class="funcion-card">
-                <p><strong>${fecha}</strong></p>
-                <p>Sala: ${f.sala.nombre} (Cap. ${f.sala.capacidad})</p>
-                <p>Precio: S/ ${f.precioBase}</p>
-                <button class="btn" onclick="verAsientos(${f.id})">Seleccionar asientos</button>
-            </div>
-        `;
+    // Agrupar funciones por fecha
+    const grouped = funciones.reduce((acc, func) => {
+        const fecha = new Date(func.fechaHora).toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' });
+        if (!acc[fecha]) acc[fecha] = [];
+        acc[fecha].push(func);
+        return acc;
+    }, {});
+
+    let html = '<h2>Selecciona un horario</h2>';
+    
+    // Ordenar fechas
+    const fechasOrdenadas = Object.keys(grouped).sort((a, b) => new Date(a) - new Date(b));
+    
+    fechasOrdenadas.forEach(fecha => {
+        html += `<h3>${fecha}</h3><div class="funciones-lista">`;
+        grouped[fecha].forEach(f => {
+            const hora = new Date(f.fechaHora).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+            html += `
+                <div class="funcion-card">
+                    <p><strong>${hora}</strong></p>
+                    <p>Sala: ${f.sala.nombre} (Cap. ${f.sala.capacidad})</p>
+                    <p>Precio: S/ ${f.precioBase}</p>
+                    <button class="btn" onclick="verAsientos(${f.id})">Seleccionar asientos</button>
+                </div>
+            `;
+        });
+        html += '</div>';
     });
-    html += '</div><button class="btn" onclick="loadPeliculas()">Volver</button>';
+    
+    html += '<button class="btn" onclick="loadPeliculas()">Volver</button>';
     app.innerHTML = html;
 }
 
@@ -280,26 +297,27 @@ function renderAsientos(asientos, funcionId) {
     });
 }
 
-// Funciones para el modal de pago
-function mostrarModalPago() {
-    const modal = document.getElementById('modal-pago');
-    if (!modal) {
-        crearModal();
-    }
-    document.getElementById('modal-pago').style.display = 'flex';
-    mostrarFormulario('tarjeta'); // Por defecto
-}
+// ==================== MODAL DE PAGO MEJORADO ====================
 
 function crearModal() {
     const modalHTML = `
         <div id="modal-pago" class="modal" style="display:none;">
             <div class="modal-content">
                 <span class="close" onclick="cerrarModal()">&times;</span>
-                <h2>Selecciona método de pago</h2>
-                <div class="metodos-pago">
-                    <button class="btn-metodo" onclick="mostrarFormulario('tarjeta')">Tarjeta</button>
-                    <button class="btn-metodo" onclick="mostrarFormulario('transferencia')">Transferencia</button>
-                    <button class="btn-metodo" onclick="mostrarFormulario('billetera')">Billetera digital</button>
+                <h2>💳 Método de pago</h2>
+                <div class="metodos-pago" id="metodos-pago">
+                    <button class="btn-metodo" onclick="mostrarFormulario('tarjeta')">
+                        <span style="font-size:2rem;">💳</span>
+                        Tarjeta
+                    </button>
+                    <button class="btn-metodo" onclick="mostrarFormulario('transferencia')">
+                        <span style="font-size:2rem;">🏦</span>
+                        Transferencia
+                    </button>
+                    <button class="btn-metodo" onclick="mostrarFormulario('billetera')">
+                        <span style="font-size:2rem;">📱</span>
+                        Billetera
+                    </button>
                 </div>
                 <div id="form-pago-container"></div>
             </div>
@@ -312,41 +330,62 @@ window.cerrarModal = function() {
     document.getElementById('modal-pago').style.display = 'none';
 };
 
+window.mostrarModalPago = function() {
+    const modal = document.getElementById('modal-pago');
+    if (!modal) {
+        crearModal();
+    }
+    document.getElementById('modal-pago').style.display = 'flex';
+    // Activar tarjeta por defecto
+    mostrarFormulario('tarjeta');
+};
+
 window.mostrarFormulario = function(metodo) {
+    // Quitar clase active de todos los botones
+    document.querySelectorAll('.btn-metodo').forEach(btn => btn.classList.remove('active'));
+    
+    // Activar el botón correspondiente
+    const botones = document.querySelectorAll('.btn-metodo');
+    if (metodo === 'tarjeta') botones[0].classList.add('active');
+    else if (metodo === 'transferencia') botones[1].classList.add('active');
+    else if (metodo === 'billetera') botones[2].classList.add('active');
+
     const container = document.getElementById('form-pago-container');
     let html = '';
 
     if (metodo === 'tarjeta') {
         html = `
             <form id="form-tarjeta">
-                <h3>Pago con tarjeta</h3>
+                <h3>💳 Pago con tarjeta</h3>
                 <input type="text" placeholder="Número de tarjeta" required>
                 <input type="text" placeholder="Nombre del titular" required>
                 <div style="display: flex; gap: 1rem;">
                     <input type="text" placeholder="MM/AA" required>
                     <input type="text" placeholder="CVV" required>
                 </div>
-                <button type="submit" class="btn">Pagar</button>
+                <button type="submit" class="btn">Pagar ahora</button>
             </form>
         `;
     } else if (metodo === 'transferencia') {
         html = `
             <form id="form-transferencia">
-                <h3>Transferencia bancaria</h3>
-                <p>Banco: Banco de Crédito</p>
-                <p>Cuenta: 123-4567890-123</p>
-                <p>CCI: 12345678901234567890</p>
+                <h3>🏦 Transferencia bancaria</h3>
+                <div class="datos-transferencia">
+                    <p><strong>Banco:</strong> Banco de Crédito</p>
+                    <p><strong>Cuenta:</strong> 123-4567890-123</p>
+                    <p><strong>CCI:</strong> 12345678901234567890</p>
+                </div>
                 <label>Número de operación:</label>
-                <input type="text" placeholder="Ingrese el número de operación" required>
+                <input type="text" placeholder="Ej: 123456" required>
                 <button type="submit" class="btn">Confirmar pago</button>
             </form>
         `;
     } else if (metodo === 'billetera') {
         html = `
             <form id="form-billetera">
-                <h3>Billetera digital</h3>
+                <h3>📱 Billetera digital</h3>
                 <select required>
-                    <option value="">Seleccione</option>
+                    <option value="">Selecciona una billetera</option>
                     <option value="yape">Yape</option>
                     <option value="plin">Plin</option>
                     <option value="tunki">Tunki</option>

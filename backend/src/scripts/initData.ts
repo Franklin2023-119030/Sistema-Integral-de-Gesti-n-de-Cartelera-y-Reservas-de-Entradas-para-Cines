@@ -45,6 +45,7 @@ interface Funcion {
 }
 
 // ==================== DATOS DE PELÍCULAS (7) ====================
+// Usamos imágenes de picsum.photos con IDs únicos (10 al 16)
 const peliculas: Pelicula[] = [
   {
     id: 1,
@@ -56,7 +57,7 @@ const peliculas: Pelicula[] = [
     fechaFinCartelera: '2026-04-15',
     sinopsis: 'Un nuevo asesino acecha a los habitantes de Woodsboro...',
     clasificacion: 'B',
-    posterUrl: 'https://via.placeholder.com/200x300?text=Scream'
+    posterUrl: 'https://picsum.photos/id/10/200/300' // paisaje
   },
   {
     id: 2,
@@ -68,7 +69,7 @@ const peliculas: Pelicula[] = [
     fechaFinCartelera: '2026-04-20',
     sinopsis: 'La vida del cantante Johnny Cash.',
     clasificacion: 'B',
-    posterUrl: 'https://via.placeholder.com/200x300?text=Walk+the+Line'
+    posterUrl: 'https://picsum.photos/id/11/200/300' // paisaje
   },
   {
     id: 3,
@@ -80,7 +81,7 @@ const peliculas: Pelicula[] = [
     fechaFinCartelera: '2026-05-01',
     sinopsis: 'Continúa el viaje de Paul Atreides...',
     clasificacion: 'B',
-    posterUrl: 'https://via.placeholder.com/200x300?text=Dune+2'
+    posterUrl: 'https://picsum.photos/id/12/200/300' // paisaje
   },
   {
     id: 4,
@@ -92,7 +93,7 @@ const peliculas: Pelicula[] = [
     fechaFinCartelera: '2026-05-10',
     sinopsis: 'Las emociones de Riley regresan...',
     clasificacion: 'A',
-    posterUrl: 'https://via.placeholder.com/200x300?text=Inside+Out+2'
+    posterUrl: 'https://picsum.photos/id/13/200/300' // paisaje
   },
   {
     id: 5,
@@ -104,7 +105,7 @@ const peliculas: Pelicula[] = [
     fechaFinCartelera: '2026-05-20',
     sinopsis: 'El origen del legendario rey de la sabana.',
     clasificacion: 'A',
-    posterUrl: 'https://via.placeholder.com/200x300?text=Mufasa'
+    posterUrl: 'https://picsum.photos/id/14/200/300' // paisaje
   },
   {
     id: 6,
@@ -116,7 +117,7 @@ const peliculas: Pelicula[] = [
     fechaFinCartelera: '2026-05-30',
     sinopsis: 'Muchos años después del reinado de César...',
     clasificacion: 'B',
-    posterUrl: 'https://via.placeholder.com/200x300?text=Planet+of+the+Apes'
+    posterUrl: 'https://picsum.photos/id/15/200/300' // paisaje
   },
   {
     id: 7,
@@ -128,7 +129,7 @@ const peliculas: Pelicula[] = [
     fechaFinCartelera: '2026-06-01',
     sinopsis: 'El fantasma más travieso regresa.',
     clasificacion: 'B',
-    posterUrl: 'https://via.placeholder.com/200x300?text=Beetlejuice+2'
+    posterUrl: 'https://picsum.photos/id/16/200/300' // paisaje
   }
 ];
 
@@ -143,7 +144,7 @@ function generarAsientos(salaId: number, filas: number, asientosPorFila: number)
   const asientos: Asiento[] = [];
   let idCounter = 1;
   for (let f = 0; f < filas; f++) {
-    const filaLetra = String.fromCharCode(65 + f); // A, B, C, ...
+    const filaLetra = String.fromCharCode(65 + f);
     for (let n = 1; n <= asientosPorFila; n++) {
       asientos.push({
         id: idCounter++,
@@ -157,25 +158,18 @@ function generarAsientos(salaId: number, filas: number, asientosPorFila: number)
   return asientos;
 }
 
-// Asientos para sala 1 (5 filas A-E, 10 asientos cada una = 50)
-const asientosSala1 = generarAsientos(1, 5, 10);
-// Asientos para sala 2 (4 filas A-D, 10 asientos cada una = 40)
-const asientosSala2 = generarAsientos(2, 4, 10);
+const asientosSala1 = generarAsientos(1, 5, 10); // 50 asientos
+const asientosSala2 = generarAsientos(2, 4, 10); // 40 asientos
 const todosAsientos = [...asientosSala1, ...asientosSala2];
 
 // ==================== FUNCIONES ====================
-// Generar funciones para los próximos 5 días, con 3 horarios por día
 function generarFunciones(): Funcion[] {
   const funciones: Funcion[] = [];
   let idCounter = 1;
-
-  // Fecha base: 5 de marzo de 2026 (puedes cambiarla si quieres)
   const fechaBase = new Date('2026-03-05');
   const horas = [16, 19, 22]; // 4pm, 7pm, 10pm
 
-  // Por cada película
   for (const pelicula of peliculas) {
-    // Por cada día (0 a 4 días después de la fecha base)
     for (let dia = 0; dia < 5; dia++) {
       const fechaActual = new Date(fechaBase);
       fechaActual.setDate(fechaBase.getDate() + dia);
@@ -183,18 +177,15 @@ function generarFunciones(): Funcion[] {
       const mes = String(fechaActual.getMonth() + 1).padStart(2, '0');
       const diaStr = String(fechaActual.getDate()).padStart(2, '0');
 
-      // Por cada hora
       for (const hora of horas) {
-        // Alternar sala: si el índice es par, sala 1; impar, sala 2 (para distribuir)
-        const salaId = (idCounter % 2 === 0) ? 1 : 2;
+        const salaId = (idCounter % 2 === 0) ? 1 : 2; // alternar
         const fechaHora = `${año}-${mes}-${diaStr}T${hora}:00:00`;
-
         funciones.push({
           id: idCounter++,
           peliculaId: pelicula.id,
           salaId,
           fechaHora,
-          precioBase: 15.0 // precio fijo para todas
+          precioBase: 15.0
         });
       }
     }
@@ -207,29 +198,16 @@ const funciones = generarFunciones();
 // ==================== GUARDAR ARCHIVOS ====================
 async function init() {
   try {
-    // Usuarios (vacío inicialmente)
     await writeData<Usuario>('usuarios', []);
-
-    // Películas
     await writeData<Pelicula>('peliculas', peliculas);
-
-    // Salas
     await writeData<Sala>('salas', salas);
-
-    // Asientos
     await writeData<Asiento>('asientos', todosAsientos);
-
-    // Funciones
     await writeData<Funcion>('funciones', funciones);
-
-    // Compras y detalle (vacíos)
     await writeData('compras', []);
     await writeData('detalleCompra', []);
-
     console.log('✅ Datos inicializados correctamente');
-    console.log(`📽️  Películas: ${peliculas.length}`);
+    console.log(`📽️ Películas: ${peliculas.length}`);
     console.log(`🎫 Funciones generadas: ${funciones.length}`);
-    console.log(`💺 Asientos: ${todosAsientos.length}`);
   } catch (error) {
     console.error('❌ Error al inicializar datos:', error);
   }

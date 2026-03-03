@@ -1,9 +1,9 @@
-// app.js - Versión final con funciones agrupadas por día y modal de pago mejorado
+// app.js - Versión final con imágenes reales y cartelera directa
 
 const API_URL = 'http://localhost:3000/api';
 let token = localStorage.getItem('token');
 let usuario = JSON.parse(localStorage.getItem('usuario') || 'null');
-let compraData = null; // Almacena datos de la compra en curso
+let compraData = null;
 
 // Elementos del DOM
 const app = document.getElementById('app');
@@ -41,15 +41,7 @@ window.logout = function() {
     token = null;
     usuario = null;
     renderUserInfo();
-    showHome();
-};
-
-// Mostrar inicio
-window.showHome = function() {
-    app.innerHTML = `
-        <h2>Bienvenido al cine</h2>
-        <button class="btn" onclick="loadPeliculas()">Ver cartelera</button>
-    `;
+    loadPeliculas(); // Volver a la cartelera
 };
 
 // Mostrar login
@@ -124,7 +116,7 @@ window.showRegister = function() {
     });
 };
 
-// Cargar películas
+// Cargar películas (se llama al iniciar)
 window.loadPeliculas = async function() {
     try {
         const res = await fetch(`${API_URL}/peliculas`);
@@ -145,7 +137,8 @@ function renderPeliculas(peliculas) {
     peliculas.forEach(p => {
         html += `
             <div class="pelicula-card" onclick="verFunciones(${p.id})">
-                <img src="${p.posterUrl}" alt="${p.titulo}" onerror="this.src='https://via.placeholder.com/200x300?text=No+Image'">
+                <img src="${p.posterUrl}" alt="${p.titulo}" 
+                     onerror="this.onerror=null; this.src='https://via.placeholder.com/200x300?text=No+Image';">
                 <div class="pelicula-info">
                     <h3>${p.titulo}</h3>
                     <p>Duración: ${p.duracion} min</p>
@@ -176,36 +169,26 @@ function renderFunciones(funciones, peliculaId) {
         return;
     }
 
-    // Agrupar funciones por fecha
-    const grouped = funciones.reduce((acc, func) => {
-        const fecha = new Date(func.fechaHora).toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' });
-        if (!acc[fecha]) acc[fecha] = [];
-        acc[fecha].push(func);
-        return acc;
-    }, {});
-
-    let html = '<h2>Selecciona un horario</h2>';
-    
-    // Ordenar fechas
-    const fechasOrdenadas = Object.keys(grouped).sort((a, b) => new Date(a) - new Date(b));
-    
-    fechasOrdenadas.forEach(fecha => {
-        html += `<h3>${fecha}</h3><div class="funciones-lista">`;
-        grouped[fecha].forEach(f => {
-            const hora = new Date(f.fechaHora).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-            html += `
-                <div class="funcion-card">
-                    <p><strong>${hora}</strong></p>
-                    <p>Sala: ${f.sala.nombre} (Cap. ${f.sala.capacidad})</p>
-                    <p>Precio: S/ ${f.precioBase}</p>
-                    <button class="btn" onclick="verAsientos(${f.id})">Seleccionar asientos</button>
-                </div>
-            `;
+    let html = '<h2>Selecciona un horario</h2><div class="funciones-lista">';
+    funciones.forEach(f => {
+        const fecha = new Date(f.fechaHora).toLocaleString('es-ES', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
         });
-        html += '</div>';
+        html += `
+            <div class="funcion-card">
+                <p><strong>${fecha}</strong></p>
+                <p>Sala: ${f.sala.nombre} (Cap. ${f.sala.capacidad})</p>
+                <p>Precio: S/ ${f.precioBase}</p>
+                <button class="btn" onclick="verAsientos(${f.id})">Seleccionar asientos</button>
+            </div>
+        `;
     });
-    
-    html += '<button class="btn" onclick="loadPeliculas()">Volver</button>';
+    html += '</div><button class="btn btn-secondary" onclick="loadPeliculas()">Volver</button>';
     app.innerHTML = html;
 }
 
@@ -288,7 +271,6 @@ function renderAsientos(asientos, funcionId) {
             alert('Selecciona al menos un asiento');
             return;
         }
-        // Guardar datos de compra
         compraData = {
             funcionId: funcionId,
             asientosIds: seleccionados.map(Number)
@@ -297,8 +279,7 @@ function renderAsientos(asientos, funcionId) {
     });
 }
 
-// ==================== MODAL DE PAGO MEJORADO ====================
-
+// ==================== MODAL DE PAGO ====================
 function crearModal() {
     const modalHTML = `
         <div id="modal-pago" class="modal" style="display:none;">
@@ -330,21 +311,8 @@ window.cerrarModal = function() {
     document.getElementById('modal-pago').style.display = 'none';
 };
 
-window.mostrarModalPago = function() {
-    const modal = document.getElementById('modal-pago');
-    if (!modal) {
-        crearModal();
-    }
-    document.getElementById('modal-pago').style.display = 'flex';
-    // Activar tarjeta por defecto
-    mostrarFormulario('tarjeta');
-};
-
 window.mostrarFormulario = function(metodo) {
-    // Quitar clase active de todos los botones
     document.querySelectorAll('.btn-metodo').forEach(btn => btn.classList.remove('active'));
-    
-    // Activar el botón correspondiente
     const botones = document.querySelectorAll('.btn-metodo');
     if (metodo === 'tarjeta') botones[0].classList.add('active');
     else if (metodo === 'transferencia') botones[1].classList.add('active');
@@ -398,7 +366,6 @@ window.mostrarFormulario = function(metodo) {
 
     container.innerHTML = html;
 
-    // Agregar evento submit al formulario
     const form = container.querySelector('form');
     if (form) {
         form.addEventListener('submit', async (e) => {
@@ -430,7 +397,12 @@ window.mostrarFormulario = function(metodo) {
     }
 };
 
-// Funciones adicionales para el navbar
+function mostrarModalPago() {
+    document.getElementById('modal-pago').style.display = 'flex';
+    mostrarFormulario('tarjeta'); // Por defecto
+}
+
+// ==================== FUNCIONES ADICIONALES ====================
 window.showProximos = function() {
     app.innerHTML = '<h2>Próximos estrenos</h2><p>Próximamente...</p>';
 };
@@ -439,9 +411,15 @@ window.showPromociones = function() {
     app.innerHTML = '<h2>Promociones</h2><p>No hay promociones disponibles</p>';
 };
 
-// Inicializar
-renderUserInfo();
-showHome();
+// ==================== INICIALIZACIÓN ====================
+// Cambiar el nombre del cine en el navbar
+document.querySelector('.logo').textContent = 'CINEMA';
 
-// Crear el modal al cargar la página
+// Crear modal al cargar la página
 crearModal();
+
+// Renderizar info de usuario
+renderUserInfo();
+
+// Mostrar la cartelera directamente
+loadPeliculas();
